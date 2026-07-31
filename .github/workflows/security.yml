@@ -18,7 +18,7 @@ jobs:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # The gitleaks CLI (MIT, free) rather than gitleaks-action@v2, which needs a
@@ -37,7 +37,7 @@ jobs:
     # settings.json also sets task.allowAutomaticTasks. That is how the May 2026
     # incident happened (see docs/SECURITY-INCIDENT-2026-07.md). Never again.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Reject folderOpen tasks and autorun consent bypass
         run: |
           if git ls-files | grep -qE '(^|/)\.vscode/'; then
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Reject tool attribution in commit messages
