@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- Build stage ---
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 # Copy the gradle wrapper + build scripts first so dependency resolution is cached
 # as its own layer and is not re-run on every source-only change.
@@ -15,7 +15,7 @@ COPY . .
 RUN ./gradlew :lims-core-service-app:bootJar --no-daemon
 
 # --- Runtime stage ---
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 # curl is needed for the container HEALTHCHECK against the actuator readiness probe.
 RUN apt-get update \
