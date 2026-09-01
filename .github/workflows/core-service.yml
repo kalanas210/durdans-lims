@@ -78,9 +78,9 @@ jobs:
       # init and analyze look at the workspace root while the build ran a level
       # down. Buildless analysis removes both problems and is quicker.
       - name: Init CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
           build-mode: none
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
