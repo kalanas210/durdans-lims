@@ -50,7 +50,7 @@ dependencies {
 
     // G4: structured JSON logging (one event per line, MDC correlationId) for
     // aggregation in the containerized/prod profiles. Pinned — not in the Spring BOM.
-    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+    implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
 
     // G6: distributed tracing — Micrometer Tracing → OpenTelemetry → OTLP (Tempo).
     // Versions are managed by the Spring Boot BOM, so they are intentionally omitted.
