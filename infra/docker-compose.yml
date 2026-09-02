@@ -153,10 +153,11 @@ services:
     ports:
       - "11000:11000"   # API only — 11001 (management) stays on the private network
     environment:
-      # Lab-local timezone: server-side time formatting and "today" boundaries
-      # (QC dashboard, lab operations) use ZoneId.systemDefault(), which reads
-      # this. Without it the JVM runs in UTC and every formatted time is 5:30 off.
-      TZ: Asia/Colombo
+      # Deliberately no TZ. The lab's zone is applied where values are formatted
+      # (app.timezone / LabTimeZone), not by moving the JVM default — that would
+      # move storage with it, because Hibernate normalises timestamp columns
+      # through whatever zone the JVM is in. Keeping this container on the same
+      # clock as the live host keeps local and production storage identical.
       SPRING_PROFILES_ACTIVE: docker
       DB_USERNAME: ${LIMS_DB_USERNAME:-postgres}
       DB_PASSWORD: ${LIMS_DB_PASSWORD:-postgres}

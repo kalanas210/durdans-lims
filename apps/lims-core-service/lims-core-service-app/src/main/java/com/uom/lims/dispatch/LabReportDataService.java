@@ -61,6 +61,7 @@ public class LabReportDataService {
 
         return new LabReportData(
                 item.getReportReference(),
+                item.getReportNo(),
                 item.getBranchCode(),
                 patientCode,
                 patient == null ? item.getPatientDisplayName() : patient.getFullName(),
@@ -70,6 +71,9 @@ public class LabReportDataService {
                 order == null ? null : text(order.getReferringDepartment()),
                 item.getTestPanelLabel(),
                 sample == null ? null : sample.getBarcode(),
+                sample == null ? null : sample.getResultNo(),
+                sample == null || sample.getTubeType() == null ? null : sample.getTubeType().name(),
+                sample == null || sample.getPriority() == null ? null : sample.getPriority().name(),
                 sample == null || sample.getCollectedAt() == null
                         ? null : sample.getCollectedAt().atZone(DISPLAY_ZONE).toOffsetDateTime(),
                 authorizedAt,
@@ -98,9 +102,9 @@ public class LabReportDataService {
 
     private LabReportData fallback(ReportDispatchItemEntity item) {
         return new LabReportData(
-                item.getReportReference(), item.getBranchCode(), item.getPatientCode(),
+                item.getReportReference(), item.getReportNo(), item.getBranchCode(), item.getPatientCode(),
                 item.getPatientDisplayName(), null, null, null, null,
-                item.getTestPanelLabel(), null, null,
+                item.getTestPanelLabel(), null, null, null, null, null,
                 item.getAuthorizedAt().atZone(DISPLAY_ZONE).toOffsetDateTime(),
                 null, null, List.of());
     }

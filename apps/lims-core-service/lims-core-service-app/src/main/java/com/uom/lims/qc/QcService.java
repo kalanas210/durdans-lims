@@ -28,16 +28,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class QcService {
 
-    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("hh:mm a")
-            .withZone(ZoneId.systemDefault());
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
-            .withZone(ZoneId.systemDefault());
+    // Zone-less on purpose: the laboratory's zone is bound at format time, so a
+    // container running in UTC still prints the time the bench actually ran the QC.
+    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("hh:mm a");
+    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd MMM, hh:mm a");
     private static final int SERIES_WINDOW = 30;
 
     private final QcResultRepository repository;
     private final InstrumentRepository instrumentRepository;
     private final TestParameterRepository testParameterRepository;
     private final com.uom.lims.audit.AuditService auditService;
+    private final com.uom.lims.config.LabTimeZone labTimeZone;
 
     /**
      * @param instrument must be a code from the instrument registry — the release
@@ -135,14 +136,14 @@ public class QcService {
         // holds patient results on QC state: the screen would show controls passing
         // while every result was held for NO_QC. An empty QC dashboard is the true
         // answer and the one that prompts somebody to run controls.
-        List<QcRunItemResponse> runs = recent.stream().map(QcService::toRun).toList();
+        List<QcRunItemResponse> runs = recent.stream().map(this::toRun).toList();
         int passed = (int) runs.stream().filter(r -> "PASS".equals(r.status())).count();
         int warnings = (int) runs.stream().filter(r -> "WARN".equals(r.status())).count();
         int failures = (int) runs.stream().filter(r -> "FAIL".equals(r.status())).count();
         return new QcDashboardResponse(runs.size(), passed, warnings, failures, runs);
     }
 
-    private static QcRunItemResponse toRun(QcResultEntity e) {
+    private QcRunItemResponse toRun(QcResultEntity e) {
         String formattedTime = formatTimestamp(e.getPerformedAt());
         return new QcRunItemResponse(
                 e.getId().toString(), e.getInstrument(), e.getAnalyte(), e.getControlLevel(),
@@ -150,13 +151,14 @@ public class QcService {
                 e.getStatus(), e.getPerformedBy(), formattedTime);
     }
 
-    private static String formatTimestamp(java.time.Instant performedAt) {
+    private String formatTimestamp(java.time.Instant performedAt) {
         if (performedAt == null) return "-";
-        java.time.LocalDate today = java.time.LocalDate.now(ZoneId.systemDefault());
-        java.time.LocalDate runDate = performedAt.atZone(ZoneId.systemDefault()).toLocalDate();
+        ZoneId zone = labTimeZone.zone();
+        java.time.LocalDate today = labTimeZone.today();
+        java.time.LocalDate runDate = performedAt.atZone(zone).toLocalDate();
         if (today.equals(runDate)) {
-            return TIME.format(performedAt);
+            return TIME.withZone(zone).format(performedAt);
         }
-        return DATE_TIME.format(performedAt);
+        return DATE_TIME.withZone(zone).format(performedAt);
     }
 }

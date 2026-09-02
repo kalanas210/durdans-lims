@@ -1,9 +1,7 @@
-# =====================================================================
 # Static EC2 bootstrap (appended to the Terraform-generated header that exports
 # AWS_REGION, ECR_*, *_SECRET, bucket/origin values, KEYCLOAK_REALM, *_TAG).
 # Brings up the LIMS compose stack: app+frontend (from ECR) + Keycloak + Kafka,
 # with the app DB on RDS and patient documents on real S3 (IAM instance role).
-# =====================================================================
 set -euxo pipefail
 
 # --- Docker + compose plugin (Amazon Linux 2023) ---
@@ -57,6 +55,10 @@ GEMINI_API_KEY="$(echo "$META_JSON" | jq_field gemini_api_key)"
 MAIL_JSON="$(get_json "$MAIL_SECRET")"
 MAIL_USERNAME="$(echo "$MAIL_JSON" | jq_field username)"
 MAIL_PASSWORD="$(echo "$MAIL_JSON" | jq_field password)"
+SMS_PROVIDER="$(echo "$MAIL_JSON" | jq_field sms_provider)"
+SMS_USER_ID="$(echo "$MAIL_JSON" | jq_field sms_user_id)"
+SMS_API_KEY="$(echo "$MAIL_JSON" | jq_field sms_api_key)"
+SMS_SENDER_ID="$(echo "$MAIL_JSON" | jq_field sms_sender_id)"
 
 KC_JSON="$(get_json "$KC_SECRET")"
 KC_ADMIN_PASSWORD="$(echo "$KC_JSON" | jq_field password)"
@@ -72,6 +74,10 @@ DB_PASSWORD=${DB_PASSWORD}
 AWS_REGION=${AWS_REGION}
 MAIL_USERNAME=${MAIL_USERNAME}
 MAIL_PASSWORD=${MAIL_PASSWORD}
+SMS_PROVIDER=${SMS_PROVIDER}
+SMS_USER_ID=${SMS_USER_ID}
+SMS_API_KEY=${SMS_API_KEY}
+SMS_SENDER_ID=${SMS_SENDER_ID}
 KEYCLOAK_ADMIN_PASSWORD=${KC_ADMIN_PASSWORD}
 KEYCLOAK_DB_PASSWORD=${KC_ADMIN_PASSWORD}
 PUBLIC_ADDR=${PUBLIC_ADDR}
@@ -281,11 +287,10 @@ services:
       AWS_REGION: ${AWS_REGION}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
-      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
-      SMS_API_URL: ${SMS_API_URL:-http://sms.ozonedesk.com/api/v1/send.php}
-      SMS_USER_ID: ${SMS_USER_ID:-}
-      SMS_API_KEY: ${SMS_API_KEY:-}
-      SMS_SENDER_ID: ${SMS_SENDER_ID:-}
+      SMS_PROVIDER: ${SMS_PROVIDER}
+      SMS_USER_ID: ${SMS_USER_ID}
+      SMS_API_KEY: ${SMS_API_KEY}
+      SMS_SENDER_ID: ${SMS_SENDER_ID}
       APP_VERIFICATION_BASE_URL: ${API_ORIGIN}
       APP_SERVICES_PATIENT_BASE_URL: ${API_ORIGIN}
     ports: [ "11000:11000" ]
@@ -321,6 +326,8 @@ services:
   frontend:
     image: ${ECR_FRONTEND}:${FRONTEND_TAG}
     mem_limit: 384m
+    environment:
+      TZ: Asia/Colombo   # SSR date formatting; no database behind it
     ports: [ "3000:3000" ]
     networks: [lims-net]
     depends_on: { app: { condition: service_started } }

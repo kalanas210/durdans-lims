@@ -79,6 +79,7 @@ public class DispatchService {
             DeliveryMethod.EMAIL);
 
     private final ReportDispatchItemRepository itemRepository;
+    private final ReportNumberService reportNumberService;
     private final ReportDeliveryAttemptRepository attemptRepository;
     private final ReportDispatchChannelService channelService;
     private final AuditService auditService;
@@ -146,6 +147,9 @@ public class DispatchService {
         if (existing.isEmpty()) {
             entity.setOverallStatus(DispatchItemStatus.PENDING);
         }
+        // Issued once and never reissued: re-authorizing or re-dispatching keeps the
+        // number already printed on the copy the patient is holding.
+        reportNumberService.ensureReportNo(entity);
         List<DeliveryMethod> preferredMethods = request.getPreferredDeliveryMethods() != null
                 && !request.getPreferredDeliveryMethods().isEmpty()
                         ? request.getPreferredDeliveryMethods()
@@ -784,6 +788,7 @@ public class DispatchService {
         return DispatchItemResponse.builder()
                 .id(e.getId())
                 .reportReference(e.getReportReference())
+                .reportNo(e.getReportNo())
                 .branchCode(e.getBranchCode())
                 .patientCode(Optional.ofNullable(reportPayload.patientCode()).orElse(e.getPatientCode()))
                 .patientDisplayName(Optional.ofNullable(reportPayload.patientName()).orElse(e.getPatientDisplayName()))

@@ -36,6 +36,12 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Deliberately no hibernate.jdbc.time_zone. It would fix Instant columns and
+        # break LocalDateTime ones — the audit log's timestamp is a LocalDateTime and
+        # its hash chain is sealed by a Postgres trigger, so a zone shift on read
+        # makes every sealed row look tampered with (AuditChainIntegrationTest).
+        # Storage stays exactly as the database already holds it; the lab's zone is
+        # applied where values are formatted for people (LabTimeZone).
 
   liquibase:
     enabled: true
@@ -115,6 +121,12 @@ spring:
       endpoint: http://localhost:4566
 
 app:
+  # The laboratory's own clock. Everything the server formats for a human — the
+  # patient list, QC, lab operations, monitoring — and every "today" boundary is
+  # computed in this zone, whatever zone the host happens to run in. Display only:
+  # it never changes how a timestamp is stored.
+  timezone: ${APP_TIMEZONE:Asia/Colombo}
+
   billing:
     service-charge-percentage: 5
     overdue-threshold-hours: 24

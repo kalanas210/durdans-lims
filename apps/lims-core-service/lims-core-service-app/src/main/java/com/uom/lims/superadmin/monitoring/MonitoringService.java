@@ -14,7 +14,6 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.FilterLogEventsReque
 import software.amazon.awssdk.services.cloudwatchlogs.model.FilterLogEventsResponse;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ public class MonitoringService {
 
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
+    private final com.uom.lims.config.LabTimeZone labTimeZone;
     private static final String NAMESPACE = "LimsApplication"; // Update as needed
     private static final String LOG_GROUP = "/aws/ecs/lims-application"; // Update as needed
 
@@ -85,7 +85,7 @@ public class MonitoringService {
             FilterLogEventsResponse response = cloudWatchLogsClient.filterLogEvents(request);
 
             return response.events().stream().map(event -> LogEventResponse.builder()
-                    .timestamp(Instant.ofEpochMilli(event.timestamp()).atZone(ZoneId.systemDefault())
+                    .timestamp(Instant.ofEpochMilli(event.timestamp()).atZone(labTimeZone.zone())
                             .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
                     .message(event.message())
                     .level("INFO") // Basic extraction, could parse from message
