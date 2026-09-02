@@ -1,7 +1,5 @@
-# Static EC2 bootstrap (appended to the Terraform-generated header that exports
-# AWS_REGION, ECR_*, *_SECRET, bucket/origin values, KEYCLOAK_REALM, *_TAG).
-# Brings up the LIMS compose stack: app+frontend (from ECR) + Keycloak + Kafka,
-# with the app DB on RDS and patient documents on real S3 (IAM instance role).
+# Static EC2 bootstrap, appended to the Terraform-generated header (see compute.tf
+# for what that header exports). Brings up the LIMS compose stack. Byte-capped.
 set -euxo pipefail
 
 # --- Docker + compose plugin (Amazon Linux 2023) ---
@@ -293,6 +291,7 @@ services:
       SMS_SENDER_ID: ${SMS_SENDER_ID}
       APP_VERIFICATION_BASE_URL: ${API_ORIGIN}
       APP_SERVICES_PATIENT_BASE_URL: ${API_ORIGIN}
+      APP_REPORTS_PORTAL_URL: ${FRONTEND_ORIGIN}/patient-portal/orders
     ports: [ "11000:11000" ]
     networks: [lims-net]
     depends_on: { kafka: { condition: service_healthy }, keycloak: { condition: service_started } }
