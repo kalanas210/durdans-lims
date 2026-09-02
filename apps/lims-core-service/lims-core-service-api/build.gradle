@@ -23,7 +23,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     // Swagger Annotations
-    api 'io.swagger.core.v3:swagger-annotations:2.2.20'
+    api 'io.swagger.core.v3:swagger-annotations:2.2.54'
 
     // Spring Data Commons for Pageable and PageableDefault
     api 'org.springframework.data:spring-data-commons'

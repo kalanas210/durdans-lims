@@ -35,7 +35,7 @@ dependencies {
     // the s3/presigner modules. That split produced the production NPE
     // ("ClientEndpointProvider ... ep is null") on every S3 presign the moment no
     // endpoint override was set (i.e. real AWS instead of LocalStack).
-    implementation enforcedPlatform("software.amazon.awssdk:bom:2.31.21")
+    implementation enforcedPlatform("software.amazon.awssdk:bom:2.54.7")
     implementation 'io.micrometer:micrometer-registry-cloudwatch2'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
@@ -50,8 +50,8 @@ dependencies {
     // Resilience4j (F2): retry + circuit-breaker on outbound S3/SMTP/HTTP, with
     // breaker state exported to Micrometer/Prometheus. Versions are pinned because the
     // Spring dependency-management BOM does not manage Resilience4j.
-    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
-    implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.4.0'
+    implementation 'io.github.resilience4j:resilience4j-micrometer:2.4.0'
 
     // G4: structured JSON logging (one event per line, MDC correlationId) for
     // aggregation in the containerized/prod profiles. Pinned — not in the Spring BOM.
@@ -63,7 +63,7 @@ dependencies {
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
     // Admin: Keycloak user/role management (server-to-server via service account)
-    implementation 'org.keycloak:keycloak-admin-client:26.0.11'
+    implementation 'org.keycloak:keycloak-admin-client:26.0.12'
 
 
     // Test dependencies
