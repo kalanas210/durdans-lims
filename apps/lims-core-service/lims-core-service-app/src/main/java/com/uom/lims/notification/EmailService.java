@@ -234,7 +234,7 @@ public class EmailService {
                             <td style="padding:7px 0;border-bottom:1px solid #e6ebf0">%s</td>
                           </tr>
                           <tr>
-                            <td style="padding:7px 0;color:#5b6672;border-bottom:1px solid #e6ebf0">Report ID</td>
+                            <td style="padding:7px 0;color:#5b6672;border-bottom:1px solid #e6ebf0">Report no.</td>
                             <td style="padding:7px 0;border-bottom:1px solid #e6ebf0">%s</td>
                             <td style="padding:7px 0;color:#5b6672;border-bottom:1px solid #e6ebf0">Authorized</td>
                             <td style="padding:7px 0;border-bottom:1px solid #e6ebf0">%s</td>
@@ -273,14 +273,41 @@ public class EmailService {
                 </body></html>
                 """.formatted(
                 html(report.patientName()), html(report.testPanel()), html(report.patientCode()),
-                html(report.sampleBarcode()), html(report.reportReference()), format(report.authorizedAt()),
+                html(report.sampleBarcode()),
+                html(firstPresent(report.reportNumber(), report.reportReference())),
+                format(report.authorizedAt()),
                 rows, clinicalNote, HtmlUtils.htmlEscape(reportsPortalUrl),
                 html(report.authorizedBy()), format(report.authorizedAt()));
     }
 
-    private static String reportFilename(LabReportData report) {
-        String reference = display(report.reportReference()).replaceAll("[^A-Za-z0-9_-]", "-");
-        return "Durdans-Lab-Report-" + reference + ".pdf";
+    /**
+     * {@code REP2026-00042_Ruwan_Jayasinghe.pdf}. What lands in the patient's inbox
+     * used to be {@code Durdans-Lab-Report-6cdc83c3-7a08-4f4a-87da-ad4fa149e1ad.pdf}
+     * — a name nobody can file, search for or tell apart from the next one. Number
+     * first so a folder of reports sorts chronologically, then the patient's name,
+     * because a household shares an inbox.
+     *
+     * <p>Everything outside {@code [A-Za-z0-9._-]} is folded to an underscore: this
+     * string becomes a filename on the recipient's machine, and a name carrying a
+     * slash, a quote or a control character has no business getting there.
+     */
+    static String reportFilename(LabReportData report) {
+        String number = slug(firstPresent(report.reportNumber(), report.reportReference()));
+        String name = slug(report.patientName());
+        return number + "_" + name + ".pdf";
+    }
+
+    /** Collapses a free-text field to a safe, readable filename segment. */
+    private static String slug(String value) {
+        String cleaned = display(value)
+                .replaceAll("[^A-Za-z0-9._-]+", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^[._-]+|[._-]+$", "");
+        return cleaned.isBlank() ? "Report" : cleaned;
+    }
+
+    private static String firstPresent(String preferred, String fallback) {
+        return preferred == null || preferred.isBlank() ? fallback : preferred;
     }
 
     private static String html(String value) {

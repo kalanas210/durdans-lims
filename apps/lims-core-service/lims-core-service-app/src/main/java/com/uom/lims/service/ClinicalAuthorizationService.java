@@ -42,7 +42,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.Period;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -74,6 +73,7 @@ public class ClinicalAuthorizationService {
     private final PatientRepository patientRepository;
     private final BranchRepository branchRepository;
     private final DispatchService dispatchService;
+    private final com.uom.lims.config.LabTimeZone labTimeZone;
     private final CaseContextResolver caseContextResolver;
 
     @Transactional(readOnly = true)
@@ -481,7 +481,7 @@ public class ClinicalAuthorizationService {
                 .testPanelLabel(testType)
                 .authorizedAt(result.getClinicallyAuthorizedAt() == null
                         ? null
-                        : OffsetDateTime.ofInstant(result.getClinicallyAuthorizedAt(), ZoneId.systemDefault()))
+                        : OffsetDateTime.ofInstant(result.getClinicallyAuthorizedAt(), labTimeZone.zone()))
                 .preferredDeliveryMethods(List.of(
                         DeliveryMethod.SMS,
                         DeliveryMethod.EMAIL))

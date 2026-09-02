@@ -13,7 +13,7 @@ class LabReportMessageFormatterTest {
         assertThat(message)
                 .startsWith("Durdans Hospital Laboratory\nAuthorized Lab Report Ready\n\nPatient: Kalana Sandakelum")
                 .contains("\nTest: Full Blood Count")
-                .contains("\nReport Ref: D87A4B51-3230")
+                .contains("\nReport No: REP2026-00042")
                 .contains("\nStatus: Clinically authorized")
                 // The link must be a page this system serves (the patient portal), not a
                 // per-report URL on a domain the project does not own.

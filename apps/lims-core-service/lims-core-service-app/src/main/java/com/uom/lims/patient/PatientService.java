@@ -48,6 +48,7 @@ public class PatientService {
         private final EmailService emailService;
         private final com.uom.lims.notification.SmsService smsService;
         private final ApplicationEventPublisher applicationEventPublisher;
+        private final com.uom.lims.config.LabTimeZone labTimeZone;
 
         public PatientResponse registerPatient(PatientCreateRequest request, String ipAddress) {
                 // Check duplicate phone
@@ -479,8 +480,10 @@ public class PatientService {
         }
 
         public DashboardStatisticsResponse getDashboardStatistics(String branchCode) {
-                ZoneId zone = ZoneId.systemDefault();
-                LocalDateTime now = LocalDateTime.now();
+                // Counted against the laboratory's day. On the UTC host "today" began at
+                // 05:30 local, so everything registered before breakfast fell into yesterday.
+                ZoneId zone = labTimeZone.zone();
+                LocalDateTime now = LocalDateTime.now(zone);
                 LocalDateTime beginningOfToday = now.toLocalDate().atStartOfDay();
                 LocalDateTime beginningOfWeek = beginningOfToday.minusDays(now.getDayOfWeek().getValue() % 7);
                 Instant beginningOfTodayInstant = beginningOfToday.atZone(zone).toInstant();
@@ -778,7 +781,12 @@ public class PatientService {
                 }
         }
 
-        private static LocalDateTime toLocalDateTime(Instant instant) {
-                return instant == null ? null : LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        /**
+         * The wall-clock time the laboratory saw, which is what "Registered 18:01"
+         * on the patient list means. Read through the container's zone instead, a
+         * UTC host reported every registration 5:30 early.
+         */
+        private LocalDateTime toLocalDateTime(Instant instant) {
+                return instant == null ? null : LocalDateTime.ofInstant(instant, labTimeZone.zone());
         }
 }

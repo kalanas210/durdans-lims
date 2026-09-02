@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!--
+        A dispatched report had no identifier a human could use. report_reference
+        is the anchor TestResult's UUID — correct as a key, useless on paper: it
+        was printed on the PDF as "Report ID
+        6cdc83c3-7a08-4f4a-87da-ad4fa149e1ad", and it was the filename the
+        patient received in their inbox.
+
+        So reports now carry REP<year>-<5 digits> alongside it, the same shape as
+        the patient code (PAT2026-00001) and the case number (RES2026-00042).
+        report_reference keeps its job as the lookup key and the API path
+        segment; report_no is what gets printed, filed and quoted on the phone.
+    -->
+
+    <changeSet id="20260903090000-1-report-no-sequence" author="kalana">
+        <comment>Sequence behind the REP&lt;year&gt;-&lt;n&gt; report number</comment>
+        <createSequence sequenceName="report_no_seq" startValue="1" incrementBy="1"/>
+    </changeSet>
+
+    <changeSet id="20260903090000-2-dispatch-item-report-no" author="kalana">
+        <comment>Human-readable report number on the dispatch item</comment>
+        <addColumn tableName="report_dispatch_item">
+            <column name="report_no" type="VARCHAR(32)"/>
+        </addColumn>
+        <createIndex tableName="report_dispatch_item" indexName="ux_report_dispatch_item_report_no" unique="true">
+            <column name="report_no"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Reports already authorized get their number now, in authorization order,
+         so a patient who asks about a report they received last week can still be
+         found by the number on it. Existing rows keep the year they were
+         authorized in; the sequence is then moved past the highest number used. -->
+    <changeSet id="20260903090000-3-backfill-report-no" author="kalana">
+        <comment>Number every dispatch item that already exists</comment>
+        <sql splitStatements="true" endDelimiter=";">
+            WITH ordered AS (
+                SELECT i.id,
+                       row_number() OVER (ORDER BY i.authorized_at, i.created_at, i.id) AS rn,
+                       to_char(COALESCE(i.authorized_at, i.created_at, now()), 'YYYY') AS yr
+                FROM report_dispatch_item i
+                WHERE i.report_no IS NULL
+            )
+            UPDATE report_dispatch_item i
+               SET report_no = 'REP' || o.yr || '-' || lpad(o.rn::text, 5, '0')
+              FROM ordered o
+             WHERE i.id = o.id;
+
+            SELECT setval(
+                'report_no_seq',
+                GREATEST((SELECT COALESCE(MAX(CAST(split_part(report_no, '-', 2) AS BIGINT)), 0)
+                            FROM report_dispatch_item WHERE report_no LIKE 'REP%'), 1),
+                (SELECT COUNT(*) > 0 FROM report_dispatch_item WHERE report_no LIKE 'REP%')
+            );
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

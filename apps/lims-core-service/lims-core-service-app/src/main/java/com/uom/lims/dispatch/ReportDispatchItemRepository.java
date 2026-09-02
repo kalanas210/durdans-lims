@@ -2,6 +2,7 @@ package com.uom.lims.dispatch;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 import com.uom.lims.api.dispatch.enums.DispatchItemStatus;
 
@@ -23,4 +24,8 @@ public interface ReportDispatchItemRepository
 
     /** Count of dispatch items in the given states — backs the lims_dispatch_failed metric (G2). */
     long countByOverallStatusIn(Collection<DispatchItemStatus> statuses);
+
+    /** Next value behind the REP&lt;year&gt;-&lt;n&gt; report number. */
+    @Query(value = "SELECT nextval('report_no_seq')", nativeQuery = true)
+    Long getNextReportSequence();
 }

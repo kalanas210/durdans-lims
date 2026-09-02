@@ -61,6 +61,9 @@ class DispatchServiceRegisterTest {
     private ReportDispatchItemRepository itemRepository;
 
     @Mock
+    private ReportNumberService reportNumberService;
+
+    @Mock
     private ReportDeliveryAttemptRepository attemptRepository;
 
     @Mock

@@ -30,16 +30,42 @@ resource "aws_secretsmanager_secret_version" "db" {
   })
 }
 
-# --- Outbound mail (fill in after apply; mail stays disabled while blank) ---
+# --- Outbound notifications: SMTP + SMS (fill in after apply; each channel stays
+#     disabled while its fields are blank) ---
+#
+# The SMS fields live here rather than in a secret of their own because
+# bootstrap.sh is capped at 15000 bytes by EC2's user_data limit and a second
+# fetch does not fit. They are the same kind of thing — the credentials the lab
+# sends patient messages with — and they are read in the same place.
+#
+# sms_provider is "ozonedesk" to send real messages and "mock" to swallow them.
+# Left blank it resolves to mock, which is why patient OTPs silently went
+# nowhere on the live host: nothing distinguished "not configured" from
+# "configured to do nothing" (MockSmsService now says so at startup).
 resource "aws_secretsmanager_secret" "mail" {
   name                    = "${local.name}/mail"
-  description             = "SMTP username + app password"
+  description             = "Outbound notification credentials: SMTP + SMS gateway"
   recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "mail" {
-  secret_id     = aws_secretsmanager_secret.mail.id
-  secret_string = jsonencode({ username = "", password = "" })
+  secret_id = aws_secretsmanager_secret.mail.id
+  secret_string = jsonencode({
+    username      = ""
+    password      = ""
+    sms_provider  = ""
+    sms_user_id   = ""
+    sms_api_key   = ""
+    sms_sender_id = ""
+  })
+
+  # Same reason the meta secret carries this, and the omission here was the bug
+  # that comment predicted: an operator types the SMTP password and the SMS key
+  # into the console, and the next apply resets both to "" — mail and OTP stop
+  # working at the next instance replacement, with nothing pointing at why.
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
 
 # --- Keycloak admin ---

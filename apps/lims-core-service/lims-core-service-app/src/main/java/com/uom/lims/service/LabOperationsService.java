@@ -18,30 +18,32 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class LabOperationsService {
 
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a")
-            .withZone(ZoneId.systemDefault());
+    // Zone bound at format time from the laboratory's own zone, not the container's.
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
 
     private final ObjectMapper objectMapper;
     private final InstrumentRepository instrumentRepository;
     private final TestResultRepository testResultRepository;
     private final QcResultRepository qcResultRepository;
+    private final com.uom.lims.config.LabTimeZone labTimeZone;
 
     public LabOperationsService(
             ObjectMapper objectMapper,
             InstrumentRepository instrumentRepository,
             TestResultRepository testResultRepository,
-            QcResultRepository qcResultRepository) {
+            QcResultRepository qcResultRepository,
+            com.uom.lims.config.LabTimeZone labTimeZone) {
         this.objectMapper = objectMapper;
         this.instrumentRepository = instrumentRepository;
         this.testResultRepository = testResultRepository;
         this.qcResultRepository = qcResultRepository;
+        this.labTimeZone = labTimeZone;
     }
 
     public QcDashboardResponse getQcDashboard() {
@@ -65,7 +67,9 @@ public class LabOperationsService {
             return loadReferenceData("reference-data/instruments.json", new TypeReference<>() {});
         }
 
-        Instant startOfDay = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant();
+        // "Today" is the laboratory's day. Taken from the container's clock it began
+        // at 05:30 local, so the morning's work was counted against yesterday.
+        Instant startOfDay = labTimeZone.today().atStartOfDay(labTimeZone.zone()).toInstant();
 
         return entities.stream()
                 .filter(inst -> !"BENCH-MANUAL".equalsIgnoreCase(inst.getCode()))
@@ -138,8 +142,7 @@ public class LabOperationsService {
         return "Main Laboratory - Bench 1";
     }
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM, hh:mm a")
-            .withZone(ZoneId.systemDefault());
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM, hh:mm a");
 
     private String resolveLastSync(String code) {
         try {
@@ -159,8 +162,8 @@ public class LabOperationsService {
                 return "Ready";
             }
 
-            LocalDate today = LocalDate.now(ZoneId.systemDefault());
-            LocalDate activityDate = latest.atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalDate today = labTimeZone.today();
+            LocalDate activityDate = latest.atZone(labTimeZone.zone()).toLocalDate();
 
             long secondsAgo = Math.max(0, Duration.between(latest, Instant.now()).toSeconds());
             if (secondsAgo < 90) {
@@ -175,9 +178,9 @@ public class LabOperationsService {
                 if (hours < 12) {
                     return hours + (hours == 1 ? " hour ago" : " hours ago");
                 }
-                return "Today, " + TIME_FORMATTER.format(latest);
+                return "Today, " + TIME_FORMATTER.withZone(labTimeZone.zone()).format(latest);
             }
-            return DATE_TIME_FORMATTER.format(latest);
+            return DATE_TIME_FORMATTER.withZone(labTimeZone.zone()).format(latest);
         } catch (Exception e) {
             return "Ready";
         }
@@ -268,7 +271,8 @@ public class LabOperationsService {
                         seed.sd(),
                         seed.status(),
                         seed.performedBy(),
-                        TIME_FORMATTER.format(now.minusSeconds(seed.minutesAgo() * 60L))))
+                        TIME_FORMATTER.withZone(labTimeZone.zone())
+                                .format(now.minusSeconds(seed.minutesAgo() * 60L))))
                 .toList();
     }
 

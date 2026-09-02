@@ -21,7 +21,15 @@ import java.util.UUID;
 public class DispatchItemResponse {
 
     private UUID id;
+
+    @Schema(description = "Anchor result id — the key this report is addressed by",
+            example = "6cdc83c3-7a08-4f4a-87da-ad4fa149e1ad")
     private String reportReference;
+
+    @Schema(description = "Human-readable report number, printed on the PDF and quoted by patients",
+            example = "REP2026-00042")
+    private String reportNo;
+
     private String branchCode;
     private String patientCode;
     private String patientDisplayName;

@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,6 +36,7 @@ public class PatientDocumentService {
     private final PatientDocumentStorageService storageService;
     private final FileStorageProperties fileStorageProperties;
     private final com.uom.lims.audit.AuditService auditService;
+    private final com.uom.lims.config.LabTimeZone labTimeZone;
 
     public DocumentResponse uploadDocument(
             String patientCode,
@@ -289,7 +289,7 @@ public class PatientDocumentService {
                 .contentType(entity.getContentType())
                 .fileSize(entity.getFileSize())
                 .uploadedAt(entity.getCreatedAt() == null ? null
-                                : LocalDateTime.ofInstant(entity.getCreatedAt(), ZoneId.systemDefault()))
+                                : LocalDateTime.ofInstant(entity.getCreatedAt(), labTimeZone.zone()))
                 .uploadedBy(resolveUploadedByDisplayName(entity.getUploadedBy()))
                 .uploadedBranch(entity.getBranchCode())
                 .build();

@@ -6,7 +6,10 @@ import java.util.List;
 
 /** Immutable, channel-neutral representation of an authorized laboratory report. */
 public record LabReportData(
+        /** Anchor result id. Internal key — never printed. */
         String reportReference,
+        /** {@code REP2026-00042}: what the PDF shows and the attachment is named after. */
+        String reportNumber,
         String branchCode,
         String patientCode,
         String patientName,
@@ -16,6 +19,12 @@ public record LabReportData(
         String referringDepartment,
         String testPanel,
         String sampleBarcode,
+        /** {@code RES2026-00042} — the case number the specimen is known by in the lab. */
+        String caseNumber,
+        /** Container the specimen arrived in; the closest thing on record to a specimen type. */
+        String specimenType,
+        /** ROUTINE / URGENT / STAT. On the report because it changes how a result is read. */
+        String priority,
         OffsetDateTime collectedAt,
         OffsetDateTime authorizedAt,
         String authorizedBy,

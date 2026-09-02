@@ -54,7 +54,7 @@ public class LabReportMessageFormatter {
                 .append("\n")
                 .append("Patient: ").append(value(report.patientName())).append("\n")
                 .append("Test: ").append(value(report.testPanel())).append("\n")
-                .append("Report Ref: ").append(shortReference(report.reportReference())).append("\n")
+                .append("Report No: ").append(reference(report)).append("\n")
                 .append("Status: Clinically authorized\n")
                 .append("\n")
                 .append("View & download your report in the Durdans patient portal:\n")
@@ -67,9 +67,24 @@ public class LabReportMessageFormatter {
                 : message.substring(0, MAX_SMS_LENGTH - 3) + "...";
     }
 
-    private static String shortReference(String reference) {
-        if (reference == null || reference.isBlank()) return "Not available";
-        return reference.length() <= 13 ? reference : reference.substring(0, 13).toUpperCase();
+    /**
+     * The number the patient can read back to us. This used to be the first 13
+     * characters of the anchor result's UUID — "6CDC83C3-7A08" — which is not a
+     * reference anyone can quote, write down, or match against the PDF sitting in
+     * their inbox. REP2026-00042 is the same number on the SMS, the email, the
+     * attachment's filename and the printout.
+     *
+     * <p>The UUID truncation survives only as a fallback for reports registered
+     * before report numbers existed and never backfilled.
+     */
+    private static String reference(LabReportData report) {
+        String number = report.reportNumber();
+        if (number != null && !number.isBlank()) {
+            return number.trim();
+        }
+        String fallback = report.reportReference();
+        if (fallback == null || fallback.isBlank()) return "Not available";
+        return fallback.length() <= 13 ? fallback : fallback.substring(0, 13).toUpperCase();
     }
 
     private static String value(String value) {

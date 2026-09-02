@@ -22,8 +22,17 @@ import java.util.List;
 @Table(name = "report_dispatch_item")
 public class ReportDispatchItemEntity extends BaseEntity {
 
+    /** Anchor TestResult id — the lookup key and the dispatch API's path segment. */
     @Column(name = "report_reference", nullable = false, length = 100)
     private String reportReference;
+
+    /**
+     * {@code REP2026-00042} — what a person reads, prints and quotes. Issued once
+     * by {@link ReportNumberService}; null only for rows the backfill has not run
+     * against yet.
+     */
+    @Column(name = "report_no", length = 32)
+    private String reportNo;
 
     @Column(name = "branch_code", nullable = false, length = 100)
     private String branchCode;
