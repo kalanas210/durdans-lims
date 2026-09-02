@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
 	// 'apply false' tells Gradle: "Don't run this here, just make it available for sub-modules"
-	id 'org.springframework.boot' version '3.5.14' apply false
+	id 'org.springframework.boot' version '4.1.1' apply false
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
