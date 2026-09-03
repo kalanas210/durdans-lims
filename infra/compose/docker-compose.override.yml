@@ -1,6 +1,7 @@
-# Compose override for the voice stack. Lives in S3 (bootstrap downloads it next to
-# docker-compose.yml, where compose merges it automatically) because user_data is
-# byte-capped and the base compose heredoc is already near it.
+# Compose override for the demo host's non-core services: the voice stack and the
+# observability pair (Prometheus + Grafana). Lives in S3 (bootstrap downloads it
+# next to docker-compose.yml, where compose merges it automatically) because
+# user_data is byte-capped and the base compose heredoc is already near it.
 #
 # The gateway runs with HOST networking: aiortc binds ephemeral UDP ports for SRTP,
 # and there is no sane way to publish a 64k-port range through the docker proxy.
@@ -38,3 +39,38 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  # ---- Observability (config + password land via setup-observability.sh) ----
+  # Deliberately small: the t3.medium host is memory-tight, so short retention and
+  # hard ceilings. No published ports on either — Grafana is reachable only through
+  # the Caddy vhost (grafana.<domain>), Prometheus only from Grafana over lims-net.
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    mem_limit: 320m
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=3d
+      - --storage.tsdb.retention.size=512MB
+    volumes:
+      - /opt/lims/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom_data:/prometheus
+    networks: [lims-net]
+    restart: always
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    mem_limit: 256m
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: https://grafana.${DOMAIN_NAME}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - /opt/lims/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks: [lims-net]
+    depends_on: [prometheus]
+    restart: always
+
+volumes:
+  prom_data: {}
+  grafana_data: {}

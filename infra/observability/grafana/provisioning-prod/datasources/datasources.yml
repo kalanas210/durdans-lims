@@ -1,0 +1,13 @@
+# Grafana datasources for the DEMO HOST only (synced to
+# s3://<bucket>/bootstrap/observability/grafana/provisioning/datasources/).
+# Prometheus only: the t3.medium host runs no Tempo, and provisioning a datasource
+# whose backend is absent just renders a permanently broken entry in the UI.
+# Local/dev keeps the richer provisioning/ directory next to this one.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
