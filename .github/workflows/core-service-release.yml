@@ -60,6 +60,11 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: true
+          # Time-boxed waivers only — each entry documents why it cannot be
+          # fixed yet. The SARIF step below deliberately ignores this file, so
+          # waived CVEs stay visible in code scanning. Path is root-relative
+          # (uses: steps ignore defaults.run.working-directory).
+          trivyignores: apps/lims-core-service/.trivyignore
 
       # Keep the full vulnerability inventory in GitHub code scanning without
       # making MEDIUM/LOW findings override the HIGH/CRITICAL release gate.
