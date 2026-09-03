@@ -1,0 +1,19 @@
+# Prometheus config for the DEMO HOST (synced to s3://<bucket>/bootstrap/observability/,
+# pulled to /opt/lims/observability/prometheus.yml). Differs from the local
+# prometheus.yml on purpose: the t3.medium host runs no Alertmanager, no rule
+# evaluation and no Keycloak metrics (KC_METRICS_ENABLED is not set there) — this
+# scrapes only the two Spring services over the compose network.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: lims-core-service
+    metrics_path: /actuator/prometheus
+    # Management port 11001 is internal to the compose network — never published.
+    static_configs:
+      - targets: ["app:11001"]
+
+  - job_name: lims-whatsapp-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["whatsapp:11011"]

@@ -1,0 +1,14 @@
+# Dashboards provisioned as code. Grafana loads every *.json in this directory
+# (the provider yml itself is ignored), so a dashboard ships by committing a file
+# here — no clicking, and local + demo host stay identical.
+apiVersion: 1
+providers:
+  - name: lims
+    folder: LIMS
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

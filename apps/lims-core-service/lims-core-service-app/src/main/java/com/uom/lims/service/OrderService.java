@@ -53,6 +53,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -952,7 +953,10 @@ public class OrderService {
         }
 
         private String localDateTimeText(LocalDateTime value) {
-                return value == null ? null : value.toString();
+                // These LocalDateTime columns hold UTC wall-time (written by
+                // LocalDateTime.now() on the UTC app container), so serialize with the
+                // Z marker like the Instant fields — otherwise clients render raw UTC.
+                return value == null ? null : value.toInstant(ZoneOffset.UTC).toString();
         }
 
         private String nullToEmpty(String value) {

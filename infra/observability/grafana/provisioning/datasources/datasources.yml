@@ -3,12 +3,16 @@
 apiVersion: 1
 datasources:
   - name: Prometheus
+    # Fixed uid: the Tempo pivots below and the provisioned dashboards reference
+    # the datasource by uid, which is otherwise random per install.
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090
     isDefault: true
 
   - name: Tempo
+    uid: tempo
     type: tempo
     access: proxy
     url: http://tempo:3200

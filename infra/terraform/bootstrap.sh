@@ -356,6 +356,7 @@ docker compose up -d kc-db keycloak kafka caddy
 /opt/lims/deploy-service.sh whatsapp "${WHATSAPP_TAG}" || true
 /opt/lims/deploy-service.sh voice "${VOICE_TAG}" || true
 /opt/lims/fetch-agent-secret.sh || true
+aws s3 cp "s3://${S3_BUCKET}/bootstrap/observability.sh" - --region "$AWS_REGION"|bash||true
 
 
 # Keycloak uses its own Postgres volume on this cost-optimized host. Back it up
