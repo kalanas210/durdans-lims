@@ -214,7 +214,7 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.7.1
-    mem_limit: 768m
+    mem_limit: 1024m
     command: start-dev --import-realm
     environment:
       KC_DB: postgres
@@ -227,7 +227,7 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME: ${KEYCLOAK_ORIGIN}
       KC_PROXY_HEADERS: xforwarded
-      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx512m
+      JAVA_OPTS_KC_HEAP: -Xms256m -Xmx768m
     ports: [ "8081:8080" ]
     # --import-realm above is a no-op without this mount. Mirrors the same mount
     # in infra/docker-compose.yml.
@@ -267,7 +267,7 @@ services:
 
   app:
     image: ${ECR_APP}:${APP_TAG}
-    mem_limit: 1280m
+    mem_limit: 2560m
     environment:
       SPRING_PROFILES_ACTIVE: docker
       DB_URL: ${DB_URL}
