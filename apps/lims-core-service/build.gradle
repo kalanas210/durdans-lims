@@ -12,6 +12,9 @@ ext {
 	set('spring-framework.version', '6.2.19')
 	set('spring-data-bom.version', '2025.0.12')
 	set('spring-kafka.version', '3.3.16')
+	// 10.1.58 fixes CVE-2026-65182/65905/68525 but is not on Maven Central yet
+	// (2026-09-03; newest published 10.1.x is 10.1.55). Bump the moment it lands
+	// and delete .trivyignore, which waives exactly those three until then.
 	set('tomcat.version', '10.1.55')
 	set('postgresql.version', '42.7.12')
 	set('kafka.version', '3.9.2')

@@ -1,0 +1,15 @@
+# Embedded Tomcat 10.1.55 container-auth CVEs, all fixed upstream in 10.1.58 —
+# which is tagged but NOT on Maven Central yet (as of 2026-09-03 the newest
+# published 10.1.x IS 10.1.55, so the fix cannot be consumed). The release gate
+# would otherwise block every deploy on an unavailable artifact.
+#
+# Why waiving is defensible here: the app authenticates exclusively through
+# Spring Security's OAuth2 resource server (Keycloak JWTs). Tomcat security
+# constraints, FORM auth and DIGEST auth — the vehicles of all three CVEs — are
+# unused. The Trivy SARIF lane still reports them in code scanning.
+#
+# DELETE this file and set tomcat.version to 10.1.58+ the moment Central has it
+# (see the ext block in build.gradle).
+CVE-2026-65182
+CVE-2026-65905
+CVE-2026-68525
