@@ -57,8 +57,13 @@ public class PatientService {
                 // Check duplicate email (only if provided)
                 validationService.validateEmailUnique(request.getEmail(), null);
 
+                // Minors are registered without an identity number, so an omitted
+                // (or blank) one is stored as NULL: two such patients must not
+                // collide on the (identity_type, identity_number) unique key.
+                String identityNumber = blankToNull(request.getIdentityNumber());
+
                 // Check duplicate identity number (only if provided)
-                validationService.validateIdentityUnique(request.getIdentityType(), request.getIdentityNumber(), null);
+                validationService.validateIdentityUnique(request.getIdentityType(), identityNumber, null);
 
                 // Generate patient code
                 String patientCode = generatePatientCode();
@@ -74,7 +79,7 @@ public class PatientService {
                 patient.setNationality(request.getNationality());
                 patient.setBloodGroup(request.getBloodGroup());
                 patient.setIdentityType(request.getIdentityType());
-                patient.setIdentityNumber(request.getIdentityNumber());
+                patient.setIdentityNumber(identityNumber);
                 patient.setPhone(request.getPhone());
                 patient.setEmail(request.getEmail());
                 patient.setHomeNumber(request.getHomeNumber());
@@ -281,6 +286,14 @@ public class PatientService {
                 return patients.map(this::mapToPatientResponse);
         }
 
+        private static String blankToNull(String value) {
+                if (value == null) {
+                        return null;
+                }
+                String trimmed = value.trim();
+                return trimmed.isEmpty() ? null : trimmed;
+        }
+
         private static boolean isNotBlank(String value) {
                 return value != null && !value.isBlank();
         }
@@ -379,12 +392,15 @@ public class PatientService {
 
                 // 3. Validate Identity Uniqueness (if changed)
                 if (request.getIdentityNumber() != null || request.getIdentityType() != null) {
-                        String newIdNum = request.getIdentityNumber() != null ? request.getIdentityNumber()
+                        String newIdNum = request.getIdentityNumber() != null
+                                        ? blankToNull(request.getIdentityNumber())
                                         : patient.getIdentityNumber();
                         IdentityType newIdType = request.getIdentityType() != null ? request.getIdentityType()
                                         : patient.getIdentityType();
 
-                        if (!newIdNum.equals(patient.getIdentityNumber())
+                        // Both sides can be null now that minors carry no identity
+                        // number, so compare with Objects.equals.
+                        if (!java.util.Objects.equals(newIdNum, patient.getIdentityNumber())
                                         || !newIdType.equals(patient.getIdentityType())) {
                                 validationService.validateIdentityUnique(newIdType, newIdNum, patientCode);
                         }
@@ -417,7 +433,7 @@ public class PatientService {
                 if (request.getIdentityType() != null)
                         patient.setIdentityType(request.getIdentityType());
                 if (request.getIdentityNumber() != null)
-                        patient.setIdentityNumber(request.getIdentityNumber());
+                        patient.setIdentityNumber(blankToNull(request.getIdentityNumber()));
                 if (request.getPhone() != null)
                         patient.setPhone(request.getPhone());
                 if (request.getHomeNumber() != null)
