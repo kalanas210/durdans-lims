@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!--
+        A child brought to the lab has no NIC of their own, but identity_number
+        was NOT NULL, so the registration form shipped a placeholder: the
+        frontend sent the literal 'PENDING' whenever the field was left empty.
+        That is worse than a null - it collides with uk_patient_identity, so
+        only the FIRST such patient could ever be registered, and it reads as a
+        real identity number everywhere the number is displayed or searched.
+
+        Identity number is now optional for patients under 18 (enforced by
+        @IdentityRequiredForAdults on PatientCreateRequest), and "no identity
+        document" is spelled NULL. The composite unique key keeps working:
+        Postgres treats NULLs as distinct, so any number of minors can be
+        registered without one.
+    -->
+
+    <changeSet id="20260908100000-1-identity-number-nullable" author="kalana">
+        <comment>Identity number is optional for patients under 18</comment>
+        <dropNotNullConstraint tableName="patient" columnName="identity_number" columnDataType="VARCHAR(100)"/>
+    </changeSet>
+
+    <changeSet id="20260908100000-2-clear-pending-placeholder" author="kalana">
+        <comment>Replace the 'PENDING' placeholder with a real absence of value</comment>
+        <sql>UPDATE patient SET identity_number = NULL WHERE identity_number = 'PENDING';</sql>
+    </changeSet>
+
+</databaseChangeLog>

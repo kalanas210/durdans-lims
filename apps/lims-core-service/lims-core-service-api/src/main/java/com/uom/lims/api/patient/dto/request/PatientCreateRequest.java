@@ -6,6 +6,8 @@ import com.uom.lims.api.common.enums.Gender;
 import com.uom.lims.api.common.enums.IdentityType;
 import com.uom.lims.api.common.enums.MaritalStatus;
 import com.uom.lims.api.common.enums.Title;
+import com.uom.lims.validation.IdentityDeclaration;
+import com.uom.lims.validation.annotation.IdentityRequiredForAdults;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,8 +26,9 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@IdentityRequiredForAdults
 @Schema(name = "PatientCreateRequest", description = "Payload used to register a new patient in the LIMS system")
-public class PatientCreateRequest {
+public class PatientCreateRequest implements IdentityDeclaration {
 
     @NotNull(message = "Title is required")
     @Schema(description = "Honorific title", example = "MR", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -59,9 +62,13 @@ public class PatientCreateRequest {
     @Schema(description = "Type of identity document", example = "NIC", requiredMode = Schema.RequiredMode.REQUIRED)
     private IdentityType identityType;
 
-    @NotBlank(message = "Identity number is required")
-    @Size(min = 1, max = 50, message = "Identity number must be between 1 and 50 characters")
-    @Schema(description = "Identity number", example = "123456789V", requiredMode = Schema.RequiredMode.REQUIRED)
+    // Required for adults only: a patient under 18 has no NIC of their own, so
+    // the class-level @IdentityRequiredForAdults decides instead of @NotBlank.
+    // No minimum length: a blank value is how "this patient has no ID" arrives
+    // from a form, and PatientService stores it as NULL.
+    @Size(max = 50, message = "Identity number cannot exceed 50 characters")
+    @Schema(description = "Identity number. Required for patients aged 18 and over; may be omitted for minors.",
+            example = "123456789V")
     private String identityNumber;
 
     @NotBlank(message = "Phone number is required")

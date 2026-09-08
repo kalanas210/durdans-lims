@@ -39,6 +39,28 @@ const IDENTITY_HINT: Record<string, string> = {
     DRIVING_LICENSE: "Must be 7-10 alphanumeric characters",
 };
 
+/** Age at which a patient is eligible for an NIC of their own. */
+const ADULT_AGE = 18;
+
+/**
+ * Whole years between `dob` and today. Children are registered without an
+ * identity document, so the form has to know the patient's age before it can
+ * decide whether the identity number is required.
+ */
+function ageInYears(dob: string): number | null {
+    if (!dob) return null;
+    const born = new Date(`${dob}T00:00:00`);
+    if (Number.isNaN(born.getTime())) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - born.getFullYear();
+    const monthDiff = today.getMonth() - born.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) {
+        age -= 1;
+    }
+    return age;
+}
+
 export default function PatientRegistrationPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -149,6 +171,11 @@ export default function PatientRegistrationPage() {
 
     const identityType = formData.identityType;
     const today = new Date().toISOString().split("T")[0];
+    const age = ageInYears(formData.dob);
+    // Under 18: no NIC of their own yet, so the identity number is optional.
+    // Until a date of birth is entered we keep it required, so an adult can't
+    // slip through by filling the form out of order.
+    const isMinor = age !== null && age < ADULT_AGE;
 
     return (
         <div className="mx-auto max-w-5xl">
@@ -243,15 +270,23 @@ export default function PatientRegistrationPage() {
                         <InputField
                             id="nic"
                             name="identityNumber"
-                            label="Identity number"
-                            required
+                            label={isMinor ? "Identity number (optional)" : "Identity number"}
+                            required={!isMinor}
                             type="text"
                             autoComplete="off"
                             style={{ textTransform: "uppercase" }}
-                            placeholder={IDENTITY_PLACEHOLDER[identityType] ?? IDENTITY_PLACEHOLDER.DRIVING_LICENSE}
+                            placeholder={
+                                isMinor
+                                    ? "Leave blank if the child has no ID"
+                                    : IDENTITY_PLACEHOLDER[identityType] ?? IDENTITY_PLACEHOLDER.DRIVING_LICENSE
+                            }
                             pattern={IDENTITY_PATTERN[identityType] ?? IDENTITY_PATTERN.DRIVING_LICENSE}
                             title={IDENTITY_HINT[identityType] ?? IDENTITY_HINT.DRIVING_LICENSE}
-                            hint={IDENTITY_HINT[identityType] ?? IDENTITY_HINT.DRIVING_LICENSE}
+                            hint={
+                                isMinor
+                                    ? `Patient is under ${ADULT_AGE} — an ID is not required. Enter one only if the child has a passport or NIC.`
+                                    : IDENTITY_HINT[identityType] ?? IDENTITY_HINT.DRIVING_LICENSE
+                            }
                             value={formData.identityNumber}
                             onChange={handleChange}
                             error={fieldErrors.identityNumber}

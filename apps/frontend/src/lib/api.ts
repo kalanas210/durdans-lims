@@ -104,7 +104,9 @@ export const createPatient = async (data: Partial<Patient>) => {
         nationality: blankToUndefined(data.nationality),
         bloodGroup: data.bloodGroup ? data.bloodGroup.toUpperCase() : undefined,
         identityType: (data.identityType || 'NIC').toUpperCase(),
-        identityNumber: data.identityNumber || 'PENDING',
+        // Left blank for patients under 18, who have no NIC of their own; the
+        // backend accepts the omission for minors and rejects it for adults.
+        identityNumber: blankToUndefined(data.identityNumber),
         phone: (data.phoneNumber || data.phone || '').replace(/\s+/g, ''),
         email: data.email || undefined,
         homeNumber: data.alternatePhone ? data.alternatePhone.replace(/\s+/g, '') : undefined,
