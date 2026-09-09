@@ -30,6 +30,47 @@ This repository is organized as an enterprise **monorepo**: the web client, core
 
 ---
 
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TB
+    staff["Lab Staff, Clinicians & Patients"] -->|Browser| frontend["Next.js Frontend<br/>React + TypeScript"]
+    frontend -->|OIDC / PKCE login| keycloak["Keycloak<br/>Identity, OIDC & RBAC"]
+    frontend -->|JWT-secured REST API| core["LIMS Core Service<br/>Spring Boot"]
+    core -->|JWT validation & admin API| keycloak
+
+    analyzer["Analyzer / Instrument Simulator"] -->|ASTM E1381/E1394 over TCP| core
+
+    waUsers["WhatsApp Text & Voice Users"] <-->|Messages & calls| meta["Meta Cloud & Calling APIs"]
+    meta -->|Signed webhook| whatsapp["WhatsApp Service<br/>Spring Boot"]
+    whatsapp -->|Replies| meta
+    whatsapp -->|Read-only service-account API| core
+    whatsapp -->|Voice call handoff| voice["Voice Gateway<br/>FastAPI + Pipecat"]
+    voice <-->|WebRTC audio| meta
+    voice -->|Policy-grounded tools| whatsapp
+    whatsapp <-->|Text agent| gemini["Google Gemini"]
+    voice <-->|Live native audio| gemini
+
+    core -->|JPA + Liquibase| clinicalDb[("PostgreSQL<br/>Clinical source of truth")]
+    whatsapp -->|JPA + Liquibase| waDb[("PostgreSQL<br/>Conversation state")]
+    keycloak --> iamDb[("PostgreSQL<br/>Identity data")]
+    core -->|Transactional outbox events| kafka{{"Apache Kafka"}}
+    kafka -->|Authorized-report workflows| core
+    core -->|Documents & reports| objectStore[("AWS S3 / LocalStack")]
+    core -->|Report-ready & critical alerts| delivery["Email / SMS Providers"]
+
+    prometheus["Prometheus"] -.->|Scrapes metrics| core
+    prometheus -.->|Scrapes metrics| whatsapp
+    core -.->|OTLP traces| tempo["Grafana Tempo"]
+    whatsapp -.->|OTLP traces| tempo
+    prometheus --> grafana["Grafana"]
+    tempo --> grafana
+```
+
+Solid arrows represent application and data flows; dotted arrows represent telemetry. Local development uses Docker Compose, LocalStack, and containerized PostgreSQL, while Terraform provisions the AWS deployment.
+
+---
+
 ## 🧰 Tech Stack
 
 | Domain | Technologies |
