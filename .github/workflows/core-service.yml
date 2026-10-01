@@ -53,7 +53,7 @@ jobs:
 
       - name: Publish test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: core-service-test-results
           path: "apps/lims-core-service/**/build/reports/tests/**"
